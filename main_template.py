@@ -92,20 +92,15 @@ cart_velocity_positive = fuzz.trapmf(cart_velocity_range, [cart_velocity_centre,
 
 force_centre = 0
 force_changer = 5
-force_little_changer = 2.5
 
 force_range = np.arange(start=-10.0, stop=10.01, step=0.01)
 
 force_negative_range = 0 - force_changer
 force_positive_range = 0 + force_changer
-force_little_negative_range = 0 - force_little_changer
-force_little_positive_range = 0 + force_little_changer
 
-force_little_negative = fuzz.trapmf(force_range,[-10.0, -10.0, force_little_negative_range, 0])
 force_negative = fuzz.trapmf(force_range,[-10.0, -10.0, force_negative_range, 0])
 force_zero = fuzz.trimf(force_range, [force_negative_range, 0, force_positive_range])
 force_positive = fuzz.trapmf(force_range, [ 0, force_positive_range, 10.0, 10.0])
-force_little_positive = fuzz.trapmf(force_range, [ 0, force_little_positive_range, 10.0, 10.0])
 
 
 """
@@ -135,11 +130,9 @@ if True:
     ax2.set_title('Cart velocity')
     ax2.legend()
 
-    ax3.plot(force_range, force_little_negative, 'g', linewidth=1.5, label='Little Negative')
     ax3.plot(force_range, force_negative, 'b', linewidth=1.5, label='Negative')
     ax3.plot(force_range, force_zero, 'k', linewidth=1.5, label='Zero')
     ax3.plot(force_range, force_positive, 'r', linewidth=1.5, label='Positive')
-    ax3.plot(force_range, force_little_positive, 'y', linewidth=1.5, label='Little Positive')
     ax3.set_title('Force range')
     ax3.legend()
 
@@ -248,49 +241,35 @@ while not control.WantExit:
     is_pole_angle_left =     fuzz.interp_membership(pole_angle_range, pole_angle_negative,           pole_angle)
     is_pole_angle_vertical = fuzz.interp_membership(pole_angle_range, pole_angle_zero,       pole_angle)
     is_pole_angle_right =    fuzz.interp_membership(pole_angle_range, pole_angle_positive,          pole_angle)
-    print(
-        f"pole angle [{is_pole_angle_left:8.4f} {is_pole_angle_vertical:8.4f} {is_pole_angle_right:8.4f}]")
 
     # cart position
     is_cart_position_left =    fuzz.interp_membership(cart_position_range, cart_position_negative,         cart_position)
     is_cart_position_desired = fuzz.interp_membership(cart_position_range, cart_position_zero,      cart_position)
     is_cart_position_right =   fuzz.interp_membership(cart_position_range, cart_position_positive,        cart_position)
-    print(
-        f"cart posit [{is_cart_position_left:8.4f} {is_cart_position_desired:8.4f} {is_cart_position_right:8.4f}]")
 
     # cart velocity
     is_cart_velocity_left =    fuzz.interp_membership(cart_velocity_range, cart_velocity_negative,         cart_velocity)
     is_cart_velocity_zero =    fuzz.interp_membership(cart_velocity_range, cart_velocity_zero,         cart_velocity)
     is_cart_velocity_right =   fuzz.interp_membership(cart_velocity_range, cart_velocity_positive,        cart_velocity)
-    print(
-        f"cart veloc [{is_cart_velocity_left:8.4f} {is_cart_velocity_zero:8.4f} {is_cart_velocity_right:8.4f}]")
 
     # 1. JEŻELI kąt patyka jest ujemny TO siła jest ujemna
-    # 2. JEŻELI kąt patyka jest zerowy ORAZ pozycja wózka jest ujemna TO siła jest lekko ujemna
-    # 3. JEŻELI kąt patyka jest dodatni TO siła jest dodatnia
-    # 4. JEŻELI kąt patyka jest zerowy ORAZ pozycja wózka jest dodatnia TO siła jest lekko dodatnia
+    # 2. JEŻELI kąt patyka jest dodatni TO siła jest dodatnia
 
     r1 = max([is_pole_angle_left]);
-    r2 = min([is_pole_angle_vertical, is_cart_position_left]);
-    r3 = max([is_pole_angle_right]);
-    r4 = min([is_pole_angle_vertical, is_cart_position_right]);
+    r2 = max([is_pole_angle_right]);
 
-    little_negative = max([r2]);
     negative = max([r1]);
     zero = max([0]);
-    positive = max([r3]);
-    little_positive = max([r4]);
+    positive = max([r2]);
 
-    u_force_little_negative = np.fmin(force_little_negative, little_negative);
     u_force_negative = np.fmin(force_negative, negative);
     u_force_zero = np.fmin(force_zero, zero);
     u_force_positive = np.fmin(force_positive, positive);
-    u_force_little_positive = np.fmin(force_little_positive, little_positive);
 
 
 #   5. Agreguj wszystkie aktywacje dla danej zmiennej wyjściowej.
     result = np.maximum.reduce(
-        [u_force_little_negative, u_force_negative, u_force_zero, u_force_positive, u_force_little_positive])
+        [ u_force_negative, u_force_zero, u_force_positive])
     
 #   6. Dokonaj defuzyfikacji (np. całkowanie ważone - centroid).
     fuzzy_response = fuzz.centroid(force_range, result)
