@@ -47,15 +47,20 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 
 pole_angle_centre = 0;
 pole_angle_changer = 5;
+pole_angle_little_changer = 2.5;
 
 pole_angle_range = np.arange(-180.0, 180.1, 0.1)
 
 pole_angle_negative_range = pole_angle_centre - pole_angle_changer
 pole_angle_positive_range = pole_angle_centre + pole_angle_changer
+pole_angle_little_negative_range = pole_angle_centre - pole_angle_little_changer
+pole_angle_little_positive_range = pole_angle_centre + pole_angle_little_changer
 
+pole_angle_little_negative     = fuzz.trapmf(pole_angle_range, [pole_angle_negative_range, pole_angle_negative_range, pole_angle_little_negative_range, pole_angle_centre])
 pole_angle_negative     = fuzz.trapmf(pole_angle_range, [-180.0, -180.0, pole_angle_negative_range, pole_angle_centre])
 pole_angle_zero  = fuzz.trimf(pole_angle_range, [pole_angle_negative_range, pole_angle_centre, pole_angle_positive_range])
 pole_angle_positive    = fuzz.trapmf(pole_angle_range, [pole_angle_centre, pole_angle_positive_range, 180.0, 180.0])
+pole_angle_little_positive    = fuzz.trapmf(pole_angle_range, [pole_angle_centre, pole_angle_little_positive_range, pole_angle_positive_range, pole_angle_positive_range])
 
 # cart_position
 
@@ -71,9 +76,8 @@ cart_position_negative    = fuzz.trapmf(cart_position_range, [-3, -3, cart_posit
 cart_position_zero  = fuzz.trimf(cart_position_range, [cart_position_negative_range, cart_position_centre, cart_position_positive_range])
 cart_position_positive   = fuzz.trapmf(cart_position_range, [cart_position_centre, cart_position_positive_range, 3, 3])
 
-#
 # cart_velocity
-#
+
 cart_velocity_centre = 0
 cart_velocity_changer = 0.5
 
@@ -86,9 +90,7 @@ cart_velocity_negative  = fuzz.trapmf(cart_velocity_range, [-2, -2, cart_velocit
 cart_velocity_zero   = fuzz.trimf(cart_velocity_range, [cart_velocity_negative_range, cart_velocity_centre, cart_velocity_positive_range])
 cart_velocity_positive = fuzz.trapmf(cart_velocity_range, [cart_velocity_centre, cart_velocity_positive_range, 2, 2])
 
-#
 # force
-#
 
 force_centre = 0
 force_changer = 5
@@ -101,11 +103,11 @@ force_positive_range = 0 + force_changer
 force_little_negative_range = 0 - force_little_changer
 force_little_positive_range = 0 + force_little_changer
 
-force_little_negative = fuzz.trapmf(force_range,[-10.0, -10.0, force_little_negative_range, 0])
+force_little_negative = fuzz.trapmf(force_range,[force_negative_range, force_negative_range, force_little_negative_range, 0])
 force_negative = fuzz.trapmf(force_range,[-10.0, -10.0, force_negative_range, 0])
 force_zero = fuzz.trimf(force_range, [force_negative_range, 0, force_positive_range])
 force_positive = fuzz.trapmf(force_range, [ 0, force_positive_range, 10.0, 10.0])
-force_little_positive = fuzz.trapmf(force_range, [ 0, force_little_positive_range, 10.0, 10.0])
+force_little_positive = fuzz.trapmf(force_range, [ 0, force_little_positive_range, force_positive_range, force_positive_range])
 
 
 """
@@ -117,9 +119,11 @@ Przykład wyświetlania:
 if True:
     fig, (ax0, ax1, ax2, ax3) = plt.subplots(nrows=4, figsize=(8, 9))
 
+    ax0.plot(pole_angle_range, pole_angle_little_negative, 'g', linewidth=1.5, label='Little Negative')
     ax0.plot(pole_angle_range, pole_angle_negative, 'b', linewidth=1.5, label='Negative')
     ax0.plot(pole_angle_range, pole_angle_zero, 'k', linewidth=1.5, label='Zero')
     ax0.plot(pole_angle_range, pole_angle_positive, 'r', linewidth=1.5, label='Positive')
+    ax0.plot(pole_angle_range, pole_angle_little_positive, 'y', linewidth=1.5, label='Little Positive')
     ax0.set_title('Pole angle')
     ax0.legend()
 
@@ -245,41 +249,41 @@ while not control.WantExit:
     """
 
      # pole angle
-    is_pole_angle_left =     fuzz.interp_membership(pole_angle_range, pole_angle_negative,           pole_angle)
+    is_pole_angle_little_negative =     fuzz.interp_membership(pole_angle_range, pole_angle_negative,           pole_angle)
+    is_pole_angle_negative =     fuzz.interp_membership(pole_angle_range, pole_angle_negative,           pole_angle)
     is_pole_angle_vertical = fuzz.interp_membership(pole_angle_range, pole_angle_zero,       pole_angle)
-    is_pole_angle_right =    fuzz.interp_membership(pole_angle_range, pole_angle_positive,          pole_angle)
-    print(
-        f"pole angle [{is_pole_angle_left:8.4f} {is_pole_angle_vertical:8.4f} {is_pole_angle_right:8.4f}]")
+    is_pole_angle_positive =    fuzz.interp_membership(pole_angle_range, pole_angle_positive,          pole_angle)
+    is_pole_angle_little_positive =    fuzz.interp_membership(pole_angle_range, pole_angle_positive,          pole_angle)
 
     # cart position
-    is_cart_position_left =    fuzz.interp_membership(cart_position_range, cart_position_negative,         cart_position)
+    is_cart_position_negative =    fuzz.interp_membership(cart_position_range, cart_position_negative,         cart_position)
     is_cart_position_desired = fuzz.interp_membership(cart_position_range, cart_position_zero,      cart_position)
-    is_cart_position_right =   fuzz.interp_membership(cart_position_range, cart_position_positive,        cart_position)
-    print(
-        f"cart posit [{is_cart_position_left:8.4f} {is_cart_position_desired:8.4f} {is_cart_position_right:8.4f}]")
+    is_cart_position_positive =   fuzz.interp_membership(cart_position_range, cart_position_positive,        cart_position)
 
     # cart velocity
-    is_cart_velocity_left =    fuzz.interp_membership(cart_velocity_range, cart_velocity_negative,         cart_velocity)
+    is_cart_velocity_negative =    fuzz.interp_membership(cart_velocity_range, cart_velocity_negative,         cart_velocity)
     is_cart_velocity_zero =    fuzz.interp_membership(cart_velocity_range, cart_velocity_zero,         cart_velocity)
-    is_cart_velocity_right =   fuzz.interp_membership(cart_velocity_range, cart_velocity_positive,        cart_velocity)
-    print(
-        f"cart veloc [{is_cart_velocity_left:8.4f} {is_cart_velocity_zero:8.4f} {is_cart_velocity_right:8.4f}]")
+    is_cart_velocity_positive =   fuzz.interp_membership(cart_velocity_range, cart_velocity_positive,        cart_velocity)
 
     # 1. JEŻELI kąt patyka jest ujemny TO siła jest ujemna
     # 2. JEŻELI kąt patyka jest zerowy ORAZ pozycja wózka jest ujemna TO siła jest lekko ujemna
     # 3. JEŻELI kąt patyka jest dodatni TO siła jest dodatnia
     # 4. JEŻELI kąt patyka jest zerowy ORAZ pozycja wózka jest dodatnia TO siła jest lekko dodatnia
+    # 5. JEŻELI kąt patyka jest lekko ujemny TO siła jest lekko ujemna
+    # 6. JEŻELI kąt patyka jest lekko dodatnia TO siła jest lekko dodatnia
 
-    r1 = max([is_pole_angle_left]);
-    r2 = min([is_pole_angle_vertical, is_cart_position_left]);
-    r3 = max([is_pole_angle_right]);
-    r4 = min([is_pole_angle_vertical, is_cart_position_right]);
+    r1 = max([is_pole_angle_negative]);
+    r2 = min([is_pole_angle_vertical, is_cart_position_negative]);
+    r3 = max([is_pole_angle_positive]);
+    r4 = min([is_pole_angle_vertical, is_cart_position_positive]);
+    r5 = max([is_pole_angle_little_negative]);
+    r6 = max([is_pole_angle_little_positive]);
 
-    little_negative = max([r2]);
+    little_negative = max([r2, r5]);
     negative = max([r1]);
     zero = max([0]);
     positive = max([r3]);
-    little_positive = max([r4]);
+    little_positive = max([r4, r6]);
 
     u_force_little_negative = np.fmin(force_little_negative, little_negative);
     u_force_negative = np.fmin(force_negative, negative);
@@ -291,7 +295,7 @@ while not control.WantExit:
 #   5. Agreguj wszystkie aktywacje dla danej zmiennej wyjściowej.
     result = np.maximum.reduce(
         [u_force_little_negative, u_force_negative, u_force_zero, u_force_positive, u_force_little_positive])
-    
+        
 #   6. Dokonaj defuzyfikacji (np. całkowanie ważone - centroid).
     fuzzy_response = fuzz.centroid(force_range, result)
 
