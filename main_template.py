@@ -46,8 +46,8 @@ env.unwrapped.viewer.window.on_key_press = on_key_press
 # pole angle 
 
 pole_angle_centre = 0;
-pole_angle_changer = 5;
-pole_angle_little_changer = 2.5;
+pole_angle_changer = 6;
+pole_angle_little_changer = 3;
 
 pole_angle_range = np.arange(-180.0, 180.1, 0.1)
 
@@ -93,7 +93,7 @@ cart_velocity_positive = fuzz.trapmf(cart_velocity_range, [cart_velocity_centre,
 # force
 
 force_centre = 0
-force_changer = 5
+force_changer = 6
 force_little_changer = 2.5
 
 force_range = np.arange(start=-10.0, stop=10.01, step=0.01)
@@ -103,11 +103,11 @@ force_positive_range = 0 + force_changer
 force_little_negative_range = 0 - force_little_changer
 force_little_positive_range = 0 + force_little_changer
 
-force_little_negative = fuzz.trapmf(force_range,[force_negative_range, force_negative_range, force_little_negative_range, 0])
-force_negative = fuzz.trapmf(force_range,[-10.0, -10.0, force_negative_range, 0])
-force_zero = fuzz.trimf(force_range, [force_negative_range, 0, force_positive_range])
-force_positive = fuzz.trapmf(force_range, [ 0, force_positive_range, 10.0, 10.0])
-force_little_positive = fuzz.trapmf(force_range, [ 0, force_little_positive_range, force_positive_range, force_positive_range])
+force_little_negative = fuzz.trapmf(force_range,[force_negative_range, -4, force_little_negative_range, 0])
+force_negative = fuzz.trapmf(force_range,[-10.0, -10.0, force_negative_range, -4.0])
+force_zero = fuzz.trimf(force_range, [force_little_negative_range, 0, force_little_positive_range])
+force_positive = fuzz.trapmf(force_range, [ 4.0, force_positive_range, 10.0, 10.0])
+force_little_positive = fuzz.trapmf(force_range, [ 0, force_little_positive_range, 4, force_positive_range])
 
 
 """
@@ -251,13 +251,13 @@ while not control.WantExit:
      # pole angle
     is_pole_angle_little_negative =     fuzz.interp_membership(pole_angle_range, pole_angle_negative,           pole_angle)
     is_pole_angle_negative =     fuzz.interp_membership(pole_angle_range, pole_angle_negative,           pole_angle)
-    is_pole_angle_vertical = fuzz.interp_membership(pole_angle_range, pole_angle_zero,       pole_angle)
+    is_pole_angle_zero = fuzz.interp_membership(pole_angle_range, pole_angle_zero,       pole_angle)
     is_pole_angle_positive =    fuzz.interp_membership(pole_angle_range, pole_angle_positive,          pole_angle)
     is_pole_angle_little_positive =    fuzz.interp_membership(pole_angle_range, pole_angle_positive,          pole_angle)
 
     # cart position
     is_cart_position_negative =    fuzz.interp_membership(cart_position_range, cart_position_negative,         cart_position)
-    is_cart_position_desired = fuzz.interp_membership(cart_position_range, cart_position_zero,      cart_position)
+    is_cart_position_zero = fuzz.interp_membership(cart_position_range, cart_position_zero,      cart_position)
     is_cart_position_positive =   fuzz.interp_membership(cart_position_range, cart_position_positive,        cart_position)
 
     # cart velocity
@@ -272,17 +272,17 @@ while not control.WantExit:
     # 5. JEŻELI kąt patyka jest lekko ujemny TO siła jest lekko ujemna
     # 6. JEŻELI kąt patyka jest lekko dodatnia TO siła jest lekko dodatnia
 
-    r1 = max([is_pole_angle_negative]);
-    r2 = min([is_pole_angle_vertical, is_cart_position_negative]);
-    r3 = max([is_pole_angle_positive]);
-    r4 = min([is_pole_angle_vertical, is_cart_position_positive]);
-    r5 = max([is_pole_angle_little_negative]);
-    r6 = max([is_pole_angle_little_positive]);
+    r1 = is_pole_angle_negative;
+    r2 = min([is_pole_angle_zero, is_cart_position_negative]);
+    r3 = is_pole_angle_positive;
+    r4 = min([is_pole_angle_zero, is_cart_position_positive]);
+    r5 = is_pole_angle_little_negative;
+    r6 = is_pole_angle_little_positive;
 
     little_negative = max([r2, r5]);
-    negative = max([r1]);
-    zero = max([0]);
-    positive = max([r3]);
+    negative = r1;
+    zero = 0;
+    positive = r3;
     little_positive = max([r4, r6]);
 
     u_force_little_negative = np.fmin(force_little_negative, little_negative);
@@ -313,9 +313,9 @@ while not control.WantExit:
         applied_force = fuzzy_response
 
     #
-    # Wyświetl stan środowiska oraz wartość odpowiedzi regulatora na ten stan.
-    print(
-        f"cpos={cart_position:8.4f}, cvel={cart_velocity:8.4f}, pang={pole_angle:8.4f}, tvel={tip_velocity:8.4f}, force={applied_force:8.4f}")
+    # # Wyświetl stan środowiska oraz wartość odpowiedzi regulatora na ten stan.
+    # print(
+    #     f"cpos={cart_position:8.4f}, cvel={cart_velocity:8.4f}, pang={pole_angle:8.4f}, tvel={tip_velocity:8.4f}, force={applied_force:8.4f}")
 
     #
     # Wykonaj krok symulacji
